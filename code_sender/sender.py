@@ -29,6 +29,7 @@ class CodeSender:
             self.prog = self.settings.get("prog")
         self.from_view = from_view
         self.bracketed_paste_mode = self.settings.get("bracketed_paste_mode")
+        self.tag = self.settings.get("tag")
 
     @classmethod
     def initialize(cls, view, **kwargs):
@@ -78,7 +79,7 @@ class CodeSender:
         send_to_sublimerepl(cmd)
 
     def send_to_terminus(self, cmd):
-        send_to_terminus(cmd, bracketed=self.bracketed_paste_mode)
+        send_to_terminus(cmd, bracketed=self.bracketed_paste_mode, tag=self.tag)
 
     def send_to_rstudio(self, cmd):
         if sublime.platform() == "windows":
@@ -266,23 +267,23 @@ class PythonCodeSender(CodeSender):
         if sublime.platform() == "windows" and self.paste_to_console:
             clipboard.set_clipboard(cmd)
             # send ctrl+v
-            send_to_terminus("\x16", bracketed=False, commit=False)
+            send_to_terminus("\x16", bracketed=False, commit=False, tag=self.tag)
             time.sleep(0.05)
-            send_to_terminus("\x1b", bracketed=False, commit=False)
+            send_to_terminus("\x1b", bracketed=False, commit=False, tag=self.tag)
             time.sleep(0.2)
-            send_to_terminus("\r", bracketed=False, commit=False)
+            send_to_terminus("\r", bracketed=False, commit=False, tag=self.tag)
             clipboard.reset_clipboard()
         else:
             if len(re.findall("\n", cmd)) > 0:
                 if self.bracketed_paste_mode:
-                    send_to_terminus(cmd, bracketed=True, commit=False)
-                    send_to_terminus("\x1b", bracketed=False)
+                    send_to_terminus(cmd, bracketed=True, commit=False, tag=self.tag)
+                    send_to_terminus("\x1b", bracketed=False, tag=self.tag)
                 else:
-                    send_to_terminus(r"%cpaste -q")
-                    send_to_terminus(cmd)
-                    send_to_terminus("--")
+                    send_to_terminus(r"%cpaste -q", tag=self.tag)
+                    send_to_terminus(cmd, tag=self.tag)
+                    send_to_terminus("--", tag=self.tag)
             else:
-                send_to_terminus(cmd, bracketed=False)
+                send_to_terminus(cmd, bracketed=False, tag=self.tag)
 
 
 class JuliaCodeSender(CodeSender):
