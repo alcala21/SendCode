@@ -10,6 +10,7 @@ from .rstudio import send_to_rstudio
 from .conemu import send_to_conemu, send_to_cmder
 from .linux import send_to_linux_terminal
 from .tmux import send_to_tmux
+from .cmux import send_to_cmux
 from .screen import send_to_screen
 from .chrome import send_to_chrome_jupyter, send_to_chrome_rstudio
 from .safari import send_to_safari_jupyter, send_to_safari_rstudio
@@ -65,6 +66,10 @@ class CodeSender:
         tmux = self.settings.get("tmux", "tmux")
         send_to_tmux(cmd, tmux, bracketed=self.bracketed_paste_mode)
 
+    def send_to_cmux(self, cmd):
+        cmux = self.settings.get("cmux", "/Applications/cmux.app/Contents/Resources/bin/cmux")
+        send_to_cmux(cmd, cmux, bracketed=self.bracketed_paste_mode)
+
     def send_to_screen(self, cmd):
         screen = self.settings.get("screen", "screen")
         send_to_screen(cmd, screen, bracketed=self.bracketed_paste_mode)
@@ -103,6 +108,8 @@ class CodeSender:
             self.send_to_linux_terminal(cmd)
         elif prog == "tmux":
             self.send_to_tmux(cmd)
+        elif prog == "cmux":
+            self.send_to_cmux(cmd)
         elif prog == "screen":
             self.send_to_screen(cmd)
         elif prog == "chrome-jupyter":
@@ -249,6 +256,19 @@ class PythonCodeSender(CodeSender):
                 send_to_tmux("\x04", tmux)
         else:
             send_to_tmux(cmd, tmux)
+
+    def send_to_cmux(self, cmd):
+        cmux = self.settings.get("cmux", "/Applications/cmux.app/Contents/Resources/bin/cmux")
+        if len(re.findall("\n", cmd)) > 0:
+            if self.bracketed_paste_mode:
+                send_to_cmux(cmd, cmux, bracketed=True, commit=False)
+                send_to_cmux("\x1b", cmux, bracketed=False)
+            else:
+                send_to_cmux(r"%cpaste -q", cmux)
+                send_to_cmux(cmd, cmux)
+                send_to_cmux("\x04", cmux)
+        else:
+            send_to_cmux(cmd, cmux)
 
     def send_to_screen(self, cmd):
         screen = self.settings.get("screen", "screen")
